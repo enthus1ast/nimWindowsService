@@ -3,7 +3,7 @@
 #               nimWindowsService
 #        (c) Copyright 2018 David Krause
 #
-#    See the file "copying.txt", included in this
+#    See the file "LICENSE.txt", included in this
 #    distribution, for details about the copyright.
 #
 ## register, delete and control windows services.
@@ -94,7 +94,6 @@ proc startService(scmManager: SC_HANDLE, serviceName: string): bool =
     ).bool
     discard service.close()
 
-
 proc stopService(scmManager: SC_HANDLE, serviceName: string): bool =
     ## stops a service by its name (*not* serviceDisplayName!)
     ## return true if service stopped sucessfully, false otherwise
@@ -108,11 +107,6 @@ when isMainModule:
     var scm = openServiceManager()
     # echo scm.deleteService("ZZZ_SERVICE_NAME4")
     # echo scm.createService("ZZZ_SERVICE_NAME4", "ZZZ_DISPLAY_NAME4", getAppFilename())
-    # echo scm.deleteService("SERVICE_NAME3")
     echo scm.createService("SERVICE_NAME3", "SERVICE_NAME3", getAppDir() / "winservice.exe")
     echo scm.startService("SERVICE_NAME3")
-    # CloseServiceHandle(schService); 
     echo scm.close() # when we're finished, close the handle to the service mananger
-
-# echo scmManager.deleteService("TEST_SERVICE")
-# echo scmManager.deleteService("TEST SERVICE")
