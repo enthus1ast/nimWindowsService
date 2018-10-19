@@ -19,12 +19,13 @@ import oldwinapi/windows
 import os
 #^^^^
 
-var SERVICE_NAME =  "SERVICE_NAME".LPTSTR
+var SERVICE_NAME =  "SERVICE_NAME2".LPTSTR
 var gSvcStatusHandle: SERVICE_STATUS_HANDLE
+var gSvcStatus: SERVICE_STATUS 
+
 
 proc reportSvcStatus(dwCurrentState, dwWin32ExitCode, dwWaitHint: DWORD) =
     var 
-        gSvcStatus: SERVICE_STATUS 
         dwCheckPoint: DWORD = 1 # TODO what is this? 
     gSvcStatus.dwCurrentState = dwCurrentState
     gSvcStatus.dwWin32ExitCode = dwWin32ExitCode
@@ -48,7 +49,16 @@ proc svcCtrlHandler(dwCtrl: DWORD): WINBOOL {.stdcall.} =
     case dwCtrl
     of SERVICE_CONTROL_STOP:
         # ReportSvcStatus
-        discard
+        # reportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
+        
+        # Signal the service to stop 
+        # TODO we must stop OUR code somehow!
+        # reportSvcStatus(gSvcStatus.dwCurrentState, NO_ERROR, 0);
+        # but for now we report stopped to test better :)
+        reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
+        sleep(1000)
+        quit()
+        # return
     of SERVICE_CONTROL_INTERROGATE:
         discard
     else:
@@ -63,6 +73,13 @@ proc SvcMain(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =  #
         SERVICE_NAME,
         svcCtrlHandler
     )
+
+    gSvcStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS
+    gSvcStatus.dwServiceSpecificExitCode = 0
+
+    # Report initial status to the SCM
+    # reportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000) 
+    reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0) 
 
     #########################
     ## THE SERVICE MAIN     #

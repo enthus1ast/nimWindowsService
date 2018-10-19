@@ -25,21 +25,36 @@ proc openServiceManager*(accessRights: DWORD = SC_MANAGER_ALL_ACCESS): SC_HANDLE
         raise newException(OsError,  "could not get a handle to Service Control Manager (SCManager): " & $GetLastError())
     return scmManager
 
+proc getServiceByName*(scmManager: SC_HANDLE, serviceName: string): SC_HANDLE =
+    ## returns a handle to the service
+    ## trows os error if failed
+    ## handle to service must be closed manually by `CloseServiceHandle(service)`
+    result = scmManager.OpenService(serviceName.LPCSTR, SERVICE_ALL_ACCESS)
+    if result == 0:
+        raise newException(OsError, "could not open service: " & serviceName & " errorCode: " &  $GetLastError() )
+
 proc deleteService*(scmManager: SC_HANDLE, serviceName: string): bool = 
     ## deletes a windows service by its ServiceName (*not* display name!)
     var service: SC_HANDLE 
-    service = scmManager.OpenService(serviceName.LPCSTR, SERVICE_ALL_ACCESS)
-    if service == 0:
-        echo "could not open service vor deletion:", GetLastError()
+    try:
+        service = scmManager.getServiceByName(serviceName)
+    except:
+        echo "could not open service vor deletion"
         return false
     result = service.DeleteService().bool
     discard service.CloseServiceHandle()
 
-proc createService*(scmManager: SC_HANDLE, serviceName, serviceDisplayName, path: string): bool =
+proc createService*(scmManager: SC_HANDLE, serviceName, serviceDisplayName, path: string, startType = SERVICE_DEMAND_START): bool =
     ## registers a service in the scmManager
     ##  serviceName: is the internal service name (sc query serviceName)
     ##  serviceDisplayName: is the visible service name (net start serviceDisplayName)
-    ##  path: is the absolute path to the service executable
+    ##  path: is the absolute path to the service executable, (*not* neccessary this control application)
+    ##  startType: is one of 
+    ##      SERVICE_BOOT_START    # ?? TODO
+    ##      SERVICE_SYSTEM_START  # ?? TODO
+    ##      SERVICE_DEMAND_START  # start service manually
+    ##      SERVICE_AUTO_START    # start service automatically
+    ##      SERVICE_DISABLED      # service is disabled
     ## returns true if the service was created successfully, false otherwise.
     # create service
     var service: SC_HANDLE = CreateService( 
@@ -64,14 +79,28 @@ proc createService*(scmManager: SC_HANDLE, serviceName, serviceDisplayName, path
     else:
         return true
 
+proc startService(scmManager: SC_HANDLE, serviceName: string): bool =
+    ## starts a service by its name (*not* serviceDisplayName!)
+    ## return true if service started sucessfully, false otherwise
+    # TODO
+    discard
+
+proc stopService(scmManager: SC_HANDLE, serviceName: string): bool =
+    ## stops a service by its name (*not* serviceDisplayName!)
+    ## return true if service stopped sucessfully, false otherwise
+    # TODO
+    discard
+
 when isMainModule:
     ## Register the service
     var scm = openServiceManager()
-    echo scm.deleteService("ZZZ_SERVICE_NAME4")
-    echo scm.createService("ZZZ_SERVICE_NAME4", "ZZZ_DISPLAY_NAME4", getAppFilename())
+    # echo scm.deleteService("ZZZ_SERVICE_NAME4")
+    # echo scm.createService("ZZZ_SERVICE_NAME4", "ZZZ_DISPLAY_NAME4", getAppFilename())
+    # echo scm.deleteService("SERVICE_NAME")
+    echo scm.createService("SERVICE_NAME2", "SERVICE_NAME2", getAppDir() / "winservice.exe")
+    
     # CloseServiceHandle(schService); 
     echo scm.CloseServiceHandle() # when we're finished, close the handle to the service mananger
 
-    
 # echo scmManager.deleteService("TEST_SERVICE")
 # echo scmManager.deleteService("TEST SERVICE")
