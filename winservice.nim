@@ -19,7 +19,7 @@ import oldwinapi/windows
 import os
 #^^^^
 
-var SERVICE_NAME =  "SERVICE_NAME2".LPTSTR
+var SERVICE_NAME =  "SERVICE_NAME2_BAA".LPTSTR
 var gSvcStatusHandle: SERVICE_STATUS_HANDLE
 var gSvcStatus: SERVICE_STATUS 
 
@@ -87,11 +87,49 @@ proc SvcMain(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =  #
         sleep(1_000)   
     fh.write("SERVICE CLOSED BY MANAGER!\n")
     fh.flushFile()
-    reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0)
+    reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0) # we have to report back when we stopped!
 
-var dispatchTable = [
-    SERVICE_TABLE_ENTRY(lpServiceName: SERVICE_NAME, lpServiceProc: SvcMain),
-    SERVICE_TABLE_ENTRY(lpServiceName: nil, lpServiceProc: nil) # last entry must be nil
-]
+type ServiceMain = proc(gSvcStatus: SERVICE_STATUS)
 
-echo StartServiceCtrlDispatcher( (addr dispatchTable[0]).LPSERVICE_TABLE_ENTRY)
+template wrapServiceMain(mainProc: ServiceMain): LPSERVICE_MAIN_FUNCTION = 
+    ## wraps a nim proc in a LPSERVICE_MAIN_FUNCTION
+    proc foo(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =
+        gSvcStatusHandle = RegisterServiceCtrlHandler(
+            SERVICE_NAME,
+            svcCtrlHandler
+        )
+        gSvcStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS
+        gSvcStatus.dwServiceSpecificExitCode = 0
+        reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0)   
+        mainProc(gSvcStatus) # call the wrapped proc
+        reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0) # we have to report back when we stopped!
+    foo
+# proc addService*(services: Services, serviceName: string, serviceMain: ServiceMain) =
+#     ## High level proc to register services
+#     discard
+
+when isMainModule:
+    import times, os
+    proc serviceMain(gSvcStatus: SERVICE_STATUS) =
+        ## a service main
+        ## use gScvStatus to check if we should stop periodically!
+        var fh = open("C:/servicelog.txt", fmAppend)
+        fh.write("SERVICE STARTED\n")
+        fh.flushFile()
+        while gSvcStatus.dwCurrentState == SERVICE_RUNNING:
+            reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0)
+            fh.write($epochTime() & "\n")
+            fh.flushFile()
+            sleep(1_000)   
+        fh.write("SERVICE CLOSED BY MANAGER!\n")
+        fh.flushFile()
+        reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0) # we have to report back when we stopped!
+
+    var wrapped = wrapServiceMain(serviceMain)
+    var dispatchTable = [
+        # SERVICE_TABLE_ENTRY(lpServiceName: SERVICE_NAME, lpServiceProc: SvcMain),
+        SERVICE_TABLE_ENTRY(lpServiceName: SERVICE_NAME, lpServiceProc: wrapped),
+        SERVICE_TABLE_ENTRY(lpServiceName: nil, lpServiceProc: nil) # last entry must be nil
+    ]
+
+    echo StartServiceCtrlDispatcher( (addr dispatchTable[0]).LPSERVICE_TABLE_ENTRY)
