@@ -55,9 +55,10 @@ proc svcCtrlHandler(dwCtrl: DWORD): WINBOOL {.stdcall.} =
         # TODO we must stop OUR code somehow!
         # reportSvcStatus(gSvcStatus.dwCurrentState, NO_ERROR, 0);
         # but for now we report stopped to test better :)
+        reportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 10_000) # we think we can stop the service in one second
+        sleep(5_000)  # TODO check how this is *really* done :)
         reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
-        sleep(1000)
-        quit()
+        # quit()
         # return
     of SERVICE_CONTROL_INTERROGATE:
         discard
@@ -68,6 +69,7 @@ proc svcCtrlHandler(dwCtrl: DWORD): WINBOOL {.stdcall.} =
 # lpServiceName*: LPTSTR
 # lpServiceProc*: LPSERVICE_MAIN_FUNCTION
 # VOID WINAPI SvcMain( DWORD dwArgc, LPTSTR *lpszArgv )
+import times
 proc SvcMain(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =  #
     gSvcStatusHandle = RegisterServiceCtrlHandler(
         SERVICE_NAME,
@@ -85,8 +87,21 @@ proc SvcMain(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =  #
     ## THE SERVICE MAIN     #
     ## YOUR CODE GOES HERE! #
     #########################
+
     discard
-    sleep(10_000)    
+    #### TESTCODE
+    var fh = open("C:/Users/peter/servicelog.txt", fmAppend)
+    fh.write("SERVICE STARTED\n")
+    fh.flushFile()
+    while gSvcStatus.dwCurrentState == SERVICE_RUNNING:
+        reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0)
+        fh.write($epochTime() & "\n")
+        fh.flushFile()
+        # discard MessageBox(0, "FOO".LPCSTR, "BAA".LPCTSTR, 0.WINUINT)
+        sleep(1_000)   
+    fh.write("SERVICE CLOSED BY MANAGER!\n")
+    fh.flushFile()
+    reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0)
 
 var dispatchTable = [
     SERVICE_TABLE_ENTRY(lpServiceName: SERVICE_NAME, lpServiceProc: SvcMain),
