@@ -3,7 +3,7 @@
 #               nimWindowsService
 #        (c) Copyright 2018 David Krause
 #
-#    See the file "copying.txt", included in this
+#    See the file "LICENSE.txt", included in this
 #    distribution, for details about the copyright.
 #
 ## register, delete and control windows services.

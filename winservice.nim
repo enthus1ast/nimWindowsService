@@ -3,7 +3,7 @@
 #               nimWindowsService
 #        (c) Copyright 2018 David Krause
 #
-#    See the file "copying.txt", included in this
+#    See the file "LICENSE.txt", included in this
 #    distribution, for details about the copyright.
 #
 ## the service code
@@ -48,27 +48,15 @@ proc svcCtrlHandler(dwCtrl: DWORD): WINBOOL {.stdcall.} =
     ## Handle the requested control code. 
     case dwCtrl
     of SERVICE_CONTROL_STOP:
-        # ReportSvcStatus
-        # reportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
-        
         # Signal the service to stop 
         # TODO we must stop OUR code somehow!
-        # reportSvcStatus(gSvcStatus.dwCurrentState, NO_ERROR, 0);
-        # but for now we report stopped to test better :)
-        reportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 10_000) # we think we can stop the service in one second
-        sleep(5_000)  # TODO check how this is *really* done :)
-        reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0);
-        # quit()
-        # return
+        reportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 10_000) # we think we can stop the service in 10 seconds
+
     of SERVICE_CONTROL_INTERROGATE:
         discard
     else:
         discard
 
-# SERVICE_TABLE_ENTRY* {.final, pure.} = object
-# lpServiceName*: LPTSTR
-# lpServiceProc*: LPSERVICE_MAIN_FUNCTION
-# VOID WINAPI SvcMain( DWORD dwArgc, LPTSTR *lpszArgv )
 import times
 proc SvcMain(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =  #
     gSvcStatusHandle = RegisterServiceCtrlHandler(
@@ -88,16 +76,14 @@ proc SvcMain(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =  #
     ## YOUR CODE GOES HERE! #
     #########################
 
-    discard
     #### TESTCODE
-    var fh = open("C:/Users/peter/servicelog.txt", fmAppend)
+    var fh = open("C:/servicelog.txt", fmAppend)
     fh.write("SERVICE STARTED\n")
     fh.flushFile()
     while gSvcStatus.dwCurrentState == SERVICE_RUNNING:
         reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0)
         fh.write($epochTime() & "\n")
         fh.flushFile()
-        # discard MessageBox(0, "FOO".LPCSTR, "BAA".LPCTSTR, 0.WINUINT)
         sleep(1_000)   
     fh.write("SERVICE CLOSED BY MANAGER!\n")
     fh.flushFile()
