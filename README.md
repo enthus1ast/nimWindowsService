@@ -30,7 +30,7 @@ steps to install a service:
 
 Example:
 
-Service control (could be implementet in the service but also could be standalone)
+Service control (could be implemented in the service but also could be standalone)
 depending on your windows settings this might require administrator privileges!:
 
 ```nim
