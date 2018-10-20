@@ -106,7 +106,10 @@ when isMainModule:
     ## Register the service
     var scm = openServiceManager()
     # echo scm.deleteService("ZZZ_SERVICE_NAME4")
+    echo scm.deleteService("ZZZ_TEST_SERVICE_1")
     # echo scm.createService("ZZZ_SERVICE_NAME4", "ZZZ_DISPLAY_NAME4", getAppFilename())
-    echo scm.createService("SERVICE_NAME3", "SERVICE_NAME3", getAppDir() / "winservice.exe")
-    echo scm.startService("SERVICE_NAME3")
+    # echo scm.createService("SERVICE_NAME3", "SERVICE_NAME3", getAppDir() / "winservice.exe")
+    # echo scm.startService("SERVICE_NAME3")
+    echo scm.createService("ZZZ_TEST_SERVICE_2", "ZZZ_TEST_SERVICE_2", getAppDir() / "examples/service1.exe")
+    echo scm.startService("ZZZ_TEST_SERVICE_2")    
     echo scm.close() # when we're finished, close the handle to the service mananger

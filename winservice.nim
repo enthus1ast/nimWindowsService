@@ -15,9 +15,6 @@
 
 import winServiceControl
 import oldwinapi/windows
-#####
-import os
-#^^^^
 
 type ServiceMain = proc(gSvcStatus: SERVICE_STATUS)
 
@@ -25,10 +22,8 @@ var SERVICE_NAME =  "SERVICE_NAME2_BAA".LPTSTR
 var gSvcStatusHandle: SERVICE_STATUS_HANDLE
 var gSvcStatus: SERVICE_STATUS 
 
-
-proc reportSvcStatus(dwCurrentState, dwWin32ExitCode, dwWaitHint: DWORD) =
-    var 
-        dwCheckPoint: DWORD = 1 # TODO what is this? 
+proc reportSvcStatus*(dwCurrentState, dwWin32ExitCode, dwWaitHint: DWORD) =
+    var dwCheckPoint: DWORD = 1 # TODO what is this? 
     gSvcStatus.dwCurrentState = dwCurrentState
     gSvcStatus.dwWin32ExitCode = dwWin32ExitCode
     gSvcStatus.dwWaitHint = dwWaitHint
@@ -53,44 +48,12 @@ proc svcCtrlHandler(dwCtrl: DWORD): WINBOOL {.stdcall.} =
         # Signal the service to stop 
         # TODO we must stop OUR code somehow!
         reportSvcStatus(SERVICE_STOP_PENDING, NO_ERROR, 10_000) # we think we can stop the service in 10 seconds
-
     of SERVICE_CONTROL_INTERROGATE:
         discard
     else:
         discard
 
-# proc SvcMain(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =  #
-#     gSvcStatusHandle = RegisterServiceCtrlHandler(
-#         SERVICE_NAME,
-#         svcCtrlHandler
-#     )
-
-#     gSvcStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS
-#     gSvcStatus.dwServiceSpecificExitCode = 0
-
-#     # Report initial status to the SCM
-#     # reportSvcStatus(SERVICE_START_PENDING, NO_ERROR, 3000) 
-#     reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0) 
-
-#     #########################
-#     ## THE SERVICE MAIN     #
-#     ## YOUR CODE GOES HERE! #
-#     #########################
-
-#     #### TESTCODE
-#     var fh = open("C:/servicelog.txt", fmAppend)
-#     fh.write("SERVICE STARTED\n")
-#     fh.flushFile()
-#     while gSvcStatus.dwCurrentState == SERVICE_RUNNING:
-#         reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0)
-#         fh.write($epochTime() & "\n")
-#         fh.flushFile()
-#         sleep(1_000)   
-#     fh.write("SERVICE CLOSED BY MANAGER!\n")
-#     fh.flushFile()
-#     reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0) # we have to report back when we stopped!
-
-template wrapServiceMain(mainProc: ServiceMain): LPSERVICE_MAIN_FUNCTION = 
+template wrapServiceMain*(mainProc: ServiceMain): LPSERVICE_MAIN_FUNCTION = 
     ## wraps a nim proc in a LPSERVICE_MAIN_FUNCTION
     proc serviceMainFunction(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =
         gSvcStatusHandle = RegisterServiceCtrlHandler(
@@ -123,7 +86,7 @@ when isMainModule:
             sleep(1_000)   
         fh.write("SERVICE CLOSED BY MANAGER!\n")
         fh.flushFile()
-        reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0) # we have to report back when we stopped!
+        # reportSvcStatus(SERVICE_STOPPED, NO_ERROR, 0) # we have to report back when we stopped!
 
     var wrapped = wrapServiceMain(serviceMain)
     var dispatchTable = [
