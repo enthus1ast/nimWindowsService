@@ -33,7 +33,7 @@ Example:
 Service control (could be implementet in the service but also could be standalone)
 depending on your windows settings this might require administrator privileges!:
 
-````nim
+```nim
 import winServiceControl
 var scm = openServiceManager()
 discard scm.createService("service_name", "service_display_name", "/path/to/service.exe")
