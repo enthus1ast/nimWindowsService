@@ -1,13 +1,15 @@
 # A simple demo service
-import ../winservice
+import ../winservice, ../winServiceControl
 import oldwinapi/windows
 import times, os
+
+const SERVICE_NAME = "ZZZ_TEST_SERVICE_2"
 
 proc serviceMain(gSvcStatus: SERVICE_STATUS) =
     ## a service main
     ## use gScvStatus to check if we should stop periodically!
     var fh = open("C:/servicelog.txt", fmAppend)
-    fh.write("SERVICE STARTED\n")
+    fh.write("SERVICE (1) STARTED\n")
     fh.flushFile()
     while gSvcStatus.dwCurrentState == SERVICE_RUNNING:
         reportSvcStatus(SERVICE_RUNNING, NO_ERROR, 0)
@@ -20,7 +22,7 @@ proc serviceMain(gSvcStatus: SERVICE_STATUS) =
 
 when isMainModule:
     var dispatchTable = [
-        SERVICE_TABLE_ENTRY(lpServiceName: SERVICE_NAME, lpServiceProc: SvcMain),
+        SERVICE_TABLE_ENTRY(lpServiceName: SERVICE_NAME, lpServiceProc: wrapServiceMain(serviceMain)),
         SERVICE_TABLE_ENTRY(lpServiceName: nil, lpServiceProc: nil) # last entry must be nil
     ]
 
