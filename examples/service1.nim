@@ -1,6 +1,6 @@
 # A simple demo service
-import ../winservice, ../winServiceControl
-import oldwinapi/windows
+import ../winservice
+import winim/lean
 import times, os
 
 const SERVICE_NAME = "ZZZ_TEST_SERVICE_2"

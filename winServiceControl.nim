@@ -9,8 +9,7 @@
 ## register, delete and control windows services.
 # loosely based on: https://docs.microsoft.com/de-de/windows/desktop/Services/svc-cpp
 
-import oldwinapi/windows
-import os
+import winim/lean
 
 proc close*(service: SC_HANDLE): bool = return service.CloseServiceHandle().bool
 
@@ -103,6 +102,7 @@ proc stopService(scmManager: SC_HANDLE, serviceName: string): bool =
     echo "Stop service not implemented yet"
 
 when isMainModule:
+    import os
     ## Register the service
     var scm = openServiceManager()
     # echo scm.deleteService("ZZZ_SERVICE_NAME4")
