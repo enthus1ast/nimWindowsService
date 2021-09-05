@@ -13,8 +13,7 @@
 # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-controlservice
 
 
-import winServiceControl
-import oldwinapi/windows
+import winim/lean
 
 type ServiceMain = proc(gSvcStatus: SERVICE_STATUS)
 
@@ -41,7 +40,7 @@ proc reportSvcStatus*(dwCurrentState, dwWin32ExitCode, dwWaitHint: DWORD) =
     # Report the status of the service to the SCM.
     echo "SetServiceStatus: " & $SetServiceStatus(gSvcStatusHandle, addr gSvcStatus)
 
-proc svcCtrlHandler(dwCtrl: DWORD): WINBOOL {.stdcall.} =
+proc svcCtrlHandler(dwCtrl: DWORD) {.stdcall.} =
     ## Handle the requested control code. 
     case dwCtrl
     of SERVICE_CONTROL_STOP:
@@ -55,7 +54,7 @@ proc svcCtrlHandler(dwCtrl: DWORD): WINBOOL {.stdcall.} =
 
 template wrapServiceMain*(mainProc: ServiceMain): LPSERVICE_MAIN_FUNCTION = 
     ## wraps a nim proc in a LPSERVICE_MAIN_FUNCTION
-    proc serviceMainFunction(dwArgc: DWORD, lpszArgv: LPTSTR) {.stdcall.} =
+    proc serviceMainFunction(dwArgc: DWORD, lpszArgv: ptr LPTSTR) {.stdcall.} =
         gSvcStatusHandle = RegisterServiceCtrlHandler(
             SERVICE_NAME,
             svcCtrlHandler
